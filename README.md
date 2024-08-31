@@ -14,5 +14,5 @@ To get started with this project, you'll need to clone the repository and instal
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/weather-backend.git
+git clone https://github.com/mishabak/weatherBackEnd.git
 cd weather-backend
