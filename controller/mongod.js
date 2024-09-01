@@ -31,7 +31,7 @@ const filterFromDb = async (startDate, endDate, country) => {
     let location = country ? { "location.country": country } : {};
     let dateFilter = {};
 
-    // if search field is not there then find last 10 doc 
+    // if search field is not there then find last 50 doc 
 
     if (startDate && endDate) {
       dateFilter = {
@@ -52,7 +52,7 @@ const filterFromDb = async (startDate, endDate, country) => {
       {
         $sort: { updatedAt: -1 },
       },
-      ...(startDate && endDate ? [] : [{ $limit: 10 }]),
+      ...(startDate && endDate ? [] : [{ $limit: 50 }]),
     ];
 
     let response = await selectedWeather.aggregate(pipeline);
