@@ -18,7 +18,9 @@ const liveWeather = async (lat, lon) => {
       hour: [],
       location: res.data?.location || {},
       current: res.data?.current || {},
-      sunset: foreCast?.astro?.sunset || "",
+      sunset: foreCast?.astro?.sunset
+        ? moment(foreCast?.astro?.sunset, "hh:mm A").format("HH:mm")
+        : "",
     };
 
     let currentTime = tz
