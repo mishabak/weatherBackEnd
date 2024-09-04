@@ -1,30 +1,58 @@
 const { default: axios } = require("axios");
-const moment = require("moment");
+var moment = require("moment-timezone");
 const { saveWeather } = require("./mongod");
 
 const liveWeather = async (lat, lon) => {
   try {
+    let dtFormat = "YYYY-MM-DD HH:mm";
+
     let res = await axios.get(
       `http://api.weatherapi.com/v1/forecast.json?key=${process.env.API_KEY}&q=${lat},${lon}`
     );
 
-    let startDate = moment().startOf("hours").format("X");
-    let endDate = moment().startOf("hours").add(10, "hours").format("X");
+    let tz = res?.data?.location?.tz_id || "";
     let foreCast = res.data?.forecast?.forecastday[0] || {};
-    let obj = { hour: [] };
 
-    obj.location = res.data?.location || {};
-    obj.current = res.data?.current || {};
-    obj.sunset = foreCast?.astro?.sunset || "";
+    // initialize response object -->
+    let responseObj = {
+      hour: [],
+      location: res.data?.location || {},
+      current: res.data?.current || {},
+      sunset: foreCast?.astro?.sunset || "",
+    };
 
-    if (res.data?.forecast && res.data?.forecast?.forecastday) {
-      obj.hour = [...res.data?.forecast?.forecastday[0].hour];
-      obj.hour = obj.hour.filter(
-        (e) => e.time_epoch >= startDate && e.time_epoch <= endDate
-      );
+    let currentTime = tz
+      ? moment().tz(tz).startOf("hours")
+      : moment().startOf("hours");
+
+    let formatedDate = currentTime.format(dtFormat);
+
+    if (foreCast?.hour.length > 0) {
+      responseObj.hour = foreCast?.hour.filter((data, idx) => {
+        // add flag for current hour -->>
+        if (formatedDate == data.time) {
+          data.now = true;
+        }
+
+        // filter 10 hours from last to first -->>
+        if (formatedDate.split(" ")[1] >= "15:00") {
+          if (idx >= 14) {
+            return data;
+          }
+        } else {
+          // filter 10 hours from start -->>
+          if (formatedDate <= data.time) {
+            return data;
+          }
+        }
+      });
     }
+
+    responseObj.hour = responseObj.hour.slice(0, 10);
+
+    // create new document if it's not exist.
     await saveWeather(res.data);
-    return obj;
+    return responseObj;
   } catch (error) {
     throw error;
   }
